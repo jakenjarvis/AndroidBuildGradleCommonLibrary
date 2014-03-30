@@ -1,5 +1,5 @@
-// allprojectsSetEncodingUTF8.gradle
-def thisname = "allprojectsSetEncodingUTF8"
+// allprojectsSetEncoding.gradle
+def thisname = "allprojectsSetEncoding"
 println "Loading ${thisname}"
 
 ext {
