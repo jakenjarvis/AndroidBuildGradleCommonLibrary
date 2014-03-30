@@ -1,0 +1,46 @@
+// allprojectsSetEncodingUTF8.gradle
+def thisname = "allprojectsSetEncodingUTF8"
+println "Loading ${thisname}"
+
+ext {
+    defaultEncoding = 'UTF-8'
+}
+
+// http://mrhaki.blogspot.jp/2012/10/gradle-goodness-init-script-for-adding.html
+allprojects {
+    afterEvaluate { project ->
+        println ":${project.name}:${thisname} Start"
+
+        def javaProject = project.plugins.hasPlugin('java')
+        def groovyProject = project.plugins.hasPlugin('groovy')
+        def androidProject = project.plugins.hasPlugin('android') || project.plugins.hasPlugin('android-library')
+
+        if(javaProject) {
+            println ":${project.name}:${thisname} Detected a Java project."
+            // Deprecated Compile replaced by JavaCompile.
+            project.tasks.withType(AbstractCompile) each {
+                println ":${project.name}:${thisname} ${it.name}.options.encoding = ${defaultEncoding}"
+                it.options.encoding = defaultEncoding
+            }
+        }
+
+        if(groovyProject) {
+            println ":${project.name}:${thisname} Detected a Groovy project."
+            project.tasks.withType(GroovyCompile) each {
+                println ":${project.name}:${thisname} ${it.name}.groovyOptions.encoding = ${defaultEncoding}"
+                it.groovyOptions.encoding = defaultEncoding
+            }
+        }
+
+        if(androidProject) {
+            println ":${project.name}:${thisname} Detected a Android project."
+            def extension = project.extensions.findByName("android")
+            if(extension != null) {
+                println ":${project.name}:${thisname} android.compileOptions.encoding = ${defaultEncoding}"
+                extension.compileOptions.encoding = defaultEncoding
+            }
+        }
+
+        println ":${project.name}:${thisname} End"
+    }
+}
