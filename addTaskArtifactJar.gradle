@@ -4,8 +4,7 @@ println "Loading ${thisname}"
 
 // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Jar.html
 task artifactJar(type: Jar) {
-    from android.sourceSets.main.java
-    // TODO: from android.sourceSets.main.allJava
+    from android.sourceSets.main.allJava
     extension = 'jar'
     destinationDir = file('build/libs/')
 }
