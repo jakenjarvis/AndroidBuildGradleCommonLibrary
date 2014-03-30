@@ -1,0 +1,10 @@
+// addTaskArtifactSourceJar.gradle
+def thisname = "addTaskArtifactSourceJar"
+println "Loading ${thisname}"
+
+task artifactSourceJar(type : Jar) {
+    from android.sourceSets.main.allSource
+    classifier = 'sources'
+    extension  = 'jar'
+    destinationDir = file('build/libs/')
+}

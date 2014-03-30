@@ -1,0 +1,34 @@
+// addTaskArtifactJavadocJar.gradle
+def thisname = "addTaskArtifactJavadocJar"
+println "Loading ${thisname}"
+
+ext {
+    javadocLinks = [] as String[]
+}
+
+// http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.javadoc.Javadoc.html
+// http://www.gradle.org/docs/current/userguide/java_plugin.html#sec:javadoc
+// http://www.gradle.org/docs/current/javadoc/org/gradle/external/javadoc/StandardJavadocDocletOptions.html
+// http://snowdream.github.io/blog/android/2013/11/01/how-to-generate-javadocs-with-android-gradle-plugin/
+// https://github.com/chrisbanes/gradle-mvn-push/issues/9
+// https://github.com/snowdream/android-autoupdater/blob/master/config/android-library.gradle
+task generateJavadoc(type: Javadoc) {
+    source = android.sourceSets.main.allJava
+    classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator))
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+
+    //options.docEncoding = rootProject.defaultEncoding
+    //options.charSet = rootProject.defaultEncoding
+    options.links("http://docs.oracle.com/javase/7/docs/api/")
+    options.linksOffline("http://d.android.com/reference", "${android.plugin.sdkDirectory}/docs/reference")
+    options.links(project.ext.javadocLinks)
+}
+
+task artifactJavadocJar(type: Jar) {
+    dependsOn generateJavadoc
+    from generateJavadoc.destinationDir
+    classifier = 'javadoc'
+    extension  = 'jar'
+    destinationDir = file('build/libs/')
+}

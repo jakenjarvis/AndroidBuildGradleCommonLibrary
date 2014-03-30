@@ -1,0 +1,9 @@
+// addTaskArtifactAar.gradle
+def thisname = "addTaskArtifactAar"
+println "Loading ${thisname}"
+
+// http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+task artifactAar(type: Zip) {
+    extension = 'aar'
+    destinationDir = file('build/libs')
+}

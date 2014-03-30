@@ -41,6 +41,14 @@ allprojects {
             }
         }
 
+        // javadoc
+        project.tasks.withType(Javadoc) each {
+            println ":${project.name}:${thisname} ${it.name}.options.docEncoding = ${defaultEncoding}"
+            println ":${project.name}:${thisname} ${it.name}.options.charSet = ${defaultEncoding}"
+            it.options.docEncoding = defaultEncoding
+            it.options.charSet = defaultEncoding
+        }
+
         println ":${project.name}:${thisname} End"
     }
 }
