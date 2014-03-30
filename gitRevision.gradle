@@ -1,0 +1,32 @@
+// gitRevision.gradle
+def thisname = "gitRevision"
+println "Loading ${thisname}"
+
+ext {
+    // http://qiita.com/gfx/items/fd8e201f9dc71518abb8
+    git_revision_short = executeCommandLine("cd ${project.rootDir}", "git rev-parse --short HEAD").in.text.trim()
+    println "SetValue: git_revision_short = " + git_revision_short
+}
+
+def executeCommandLine(... commands)
+{
+    def shell = ""
+    def param = ""
+    def delimiter = ""
+
+    if(System.getProperty("os.name") ==~ /(?i).*windows.*/)
+    {
+        // windows
+        shell = "cmd"
+        param = "/c"
+        delimiter = " & "
+    }
+    else
+    {
+        // unix
+        shell = "sh"
+        param = "-c"
+        delimiter = " ; "
+    }
+    return [shell, param, commands.join(delimiter)].execute()
+}
