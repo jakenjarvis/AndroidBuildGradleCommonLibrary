@@ -5,7 +5,7 @@ This is a my gradle common library for Android project. Add "git submodule" to t
 
 ## Setup
 
-    git submodule add git@github.com:jakenjarvis/AndroidBuildGradleCommonLibrary.git gradle/library
+    git submodule add git@github.com:jakenjarvis/AndroidBuildGradleCommonLibrary.git gradle/commonlibrary
     git submodule update --init
     git commit -m "Add AndroidBuildGradleCommonLibrary as a submodule"
 
@@ -45,7 +45,7 @@ This "commonlibrary" extension is a wrapper thin "apply from".
 
 This is equivalent to the following syntax.
 
-    apply from: "gradle/library/allprojectsSetEncoding.gradle"
+    apply from: "gradle/commonlibrary/allprojectsSetEncoding.gradle"
 
 
 sample: build.gradle (root project)  
