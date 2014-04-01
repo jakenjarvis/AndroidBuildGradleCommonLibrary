@@ -21,7 +21,7 @@ This is a my gradle common library for Android project. Add "git submodule" to t
 ### build.gradle (root project) 
 
     // CommonLibraryPlugin will be added.
-    apply from: "gradle/library/CommonLibrary.gradle"
+    apply from: "gradle/commonlibrary/CommonLibrary.gradle"
 
     // Use the "commonlibrary" extension.
     commonlibrary {
