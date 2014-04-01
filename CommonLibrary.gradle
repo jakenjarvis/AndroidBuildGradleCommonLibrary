@@ -1,0 +1,58 @@
+// CommonLibrary.gradle
+def thisname = "CommonLibrary"
+println "Loading ${thisname}"
+
+apply plugin: CommonLibraryPlugin
+
+class CommonLibraryPlugin implements Plugin<Project> {
+    void apply(Project project) {
+        project.extensions.create("CommonLibrary", CommonLibraryPluginExtension, project)
+
+        boolean rootDirEnabled = project.CommonLibrary.rootDir?.trim()
+        if(!rootDirEnabled) {
+            def findroot = project.fileTree(dir: project.rootProject.projectDir, include: "CommonLibrary.gradle")
+            if(!findroot.isEmpty()) {
+                project.CommonLibrary.rootDir = findroot.getSingleFile().getParent()
+            } else {
+                project.CommonLibrary.rootDir = new File(project.rootProject.projectDir, "/gradle/library")
+            }
+        }
+
+        def thisCommonLibrary = new File(project.CommonLibrary.rootDir, "CommonLibrary.gradle")
+        if(!thisCommonLibrary.exists()) {
+            throw new Exception("Path to the root directory of CommonLibrary is invalid: ${project.CommonLibrary.rootDir}. Please set the correct path to [project.CommonLibrary.rootDir].")
+        }
+
+        println "AndroidBuildGradleCommonLibrary: ${project.CommonLibrary.rootDir}"
+    }
+}
+
+class CommonLibraryPluginExtension {
+
+    public def String rootDir = null
+
+    private def rootProject = null
+
+    CommonLibraryPluginExtension(project)
+    {
+        this.rootProject = project
+    }
+
+    def apply(from)
+    {
+        this.apply(this.rootProject, from)
+    }
+
+    def apply(project, from)
+    {
+        // TODO: How to identify a project of the caller? I want to eliminate the project argument...
+        def tree = project.fileTree(rootDir)
+                .include("**/*${from}*.gradle")
+                .exclude("CommonLibrary.gradle")
+        if(!tree.isEmpty())
+        {
+            project.apply from: tree.getSingleFile()
+        }
+    }
+
+}
