@@ -5,54 +5,95 @@ println "Loading ${thisname}"
 apply plugin: CommonLibraryPlugin
 
 class CommonLibraryPlugin implements Plugin<Project> {
-    void apply(Project project) {
-        project.extensions.create("CommonLibrary", CommonLibraryPluginExtension, project)
 
-        boolean rootDirEnabled = project.CommonLibrary.rootDir?.trim()
+    private def rootProject = null
+    private def listLoading = []
+
+    void apply(Project project) {
+        this.rootProject = project.rootProject
+        project.extensions.create("commonlibrary", CommonLibraryPluginExtension, this)
+
+        boolean rootDirEnabled = project.commonlibrary.rootDir?.trim()
         if(!rootDirEnabled) {
-            def findroot = project.fileTree(dir: project.rootProject.projectDir, include: "CommonLibrary.gradle")
+            println "Find rootDir"
+            def findroot = project.fileTree(dir: this.rootProject.projectDir, include: "CommonLibrary.gradle")
             if(!findroot.isEmpty()) {
-                project.CommonLibrary.rootDir = findroot.getSingleFile().getParent()
+                project.commonlibrary.rootDir = findroot.getSingleFile().getParent()
             } else {
-                project.CommonLibrary.rootDir = new File(project.rootProject.projectDir, "/gradle/library")
+                project.commonlibrary.rootDir = new File(this.rootProject.projectDir, "/gradle/library")
             }
         }
 
-        def thisCommonLibrary = new File(project.CommonLibrary.rootDir, "CommonLibrary.gradle")
-        if(!thisCommonLibrary.exists()) {
-            throw new Exception("Path to the root directory of CommonLibrary is invalid: ${project.CommonLibrary.rootDir}. Please set the correct path to [project.CommonLibrary.rootDir].")
-        }
-
-        println "AndroidBuildGradleCommonLibrary: ${project.CommonLibrary.rootDir}"
+        println "AndroidBuildGradleCommonLibrary: ${project.commonlibrary.rootDir}"
     }
+
+    def getRootProject()
+    {
+        return this.rootProject
+    }
+
+    def findModuleByFrom(project, from)
+    {
+        def tree = project.fileTree(this.rootProject.commonlibrary.rootDir)
+                .include("**/*${from}*.gradle")
+                .exclude("CommonLibrary.gradle")
+        if(tree.isEmpty())
+        {
+            throw new Exception("Module can not be found: ${from}")
+        }
+        return tree.getSingleFile()
+    }
+
+    def apply(project, key, module)
+    {
+        if(this.listLoading.contains(key))
+        {
+            throw new Exception("apply is not possible to read in duplicate modules in one project: ${module.toString()} in ${project.name}")
+        }
+        this.listLoading.add(key)
+
+        // Injection of module: "apply from: module"
+        project.apply(from: module)
+    }
+
+
 }
 
 class CommonLibraryPluginExtension {
 
-    public def String rootDir = null
+    def File rootDir = null
 
-    private def rootProject = null
+    private def rootPlugin = null
 
-    CommonLibraryPluginExtension(project)
+    CommonLibraryPluginExtension(plugin)
     {
-        this.rootProject = project
+        this.rootPlugin = plugin
     }
 
-    def apply(from)
-    {
-        this.apply(this.rootProject, from)
-    }
+    //def apply(from)
+    //{
+    //    this.apply(this.rootPlugin.getRootProject(), from)
+    //}
 
     def apply(project, from)
     {
         // TODO: How to identify a project of the caller? I want to eliminate the project argument...
-        def tree = project.fileTree(rootDir)
-                .include("**/*${from}*.gradle")
-                .exclude("CommonLibrary.gradle")
-        if(!tree.isEmpty())
-        {
-            project.apply from: tree.getSingleFile()
-        }
-    }
 
+        def thisCommonLibrary = new File(project.commonlibrary.rootDir, "CommonLibrary.gradle")
+        if(!thisCommonLibrary.exists()) {
+            throw new Exception("Path to the root directory of CommonLibrary is invalid: ${project.commonlibrary.rootDir}. Please set the correct path to [project.commonlibrary.rootDir].")
+        }
+
+        def module = this.rootPlugin.findModuleByFrom(project, from)
+        def key
+        if(module ==~ /(?i).*(allprojects|subprojects).*/)
+        {
+            key = "${module.toString()}"
+        }
+        else
+        {
+            key = "${project.name}_${module.toString()}"
+        }
+        this.rootPlugin.apply(project, key, module)
+    }
 }
