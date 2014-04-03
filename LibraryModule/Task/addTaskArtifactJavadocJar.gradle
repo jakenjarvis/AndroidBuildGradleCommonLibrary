@@ -12,9 +12,10 @@ ext {
 // http://snowdream.github.io/blog/android/2013/11/01/how-to-generate-javadocs-with-android-gradle-plugin/
 // https://github.com/chrisbanes/gradle-mvn-push/issues/9
 // https://github.com/snowdream/android-autoupdater/blob/master/config/android-library.gradle
+// http://stackoverflow.com/questions/10895032/javadoc-with-gradle-dont-get-the-libraries-while-running-javadoc-task
 task generateJavadoc(type: Javadoc) {
     source = android.sourceSets.main.allJava
-    classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator))
+    classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator)) + configurations.compile
     exclude '**/BuildConfig.java'
     exclude '**/R.java'
 
