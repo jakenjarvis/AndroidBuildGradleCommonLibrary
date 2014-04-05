@@ -1,0 +1,85 @@
+// allprojectsAddConfigurationProvidedScope.gradle
+def thisname = "allprojectsAddConfigurationProvidedScope"
+println "Loading ${thisname}"
+
+gradle.afterProject {eventproject, projectState ->
+    allprojects { project ->
+        def providedExists = false
+        try {
+            providedExists = (project.configurations.getAt("provided") != null)
+        } catch(UnknownConfigurationException e) {
+            providedExists = false
+        }
+        println ":${project.name}:${thisname} Provided scope exists? ${providedExists}"
+
+        if ((!providedExists) && (!projectState.failure)) {
+            println ":${project.name}:${thisname} Start"
+
+            def javaProject = project.plugins.hasPlugin('java')
+            def groovyProject = project.plugins.hasPlugin('groovy')
+
+            def androidApplicationProject = project.plugins.hasPlugin('android')
+            def androidLibraryProject = project.plugins.hasPlugin('android-library')
+            def androidProject = androidApplicationProject || androidLibraryProject
+
+            def ideaProject = project.plugins.hasPlugin('idea')
+            def eclipseProject = project.plugins.hasPlugin('eclipse')
+
+            // http://stackoverflow.com/questions/18738888/how-to-use-provided-scope-for-jar-file-in-gradle-build
+            if(javaProject || groovyProject || androidProject) {
+                println ":${project.name}:${thisname} Detected a Java|Groovy|Android project."
+                project.configurations {
+                    provided
+                }
+                project.sourceSets {
+                    main.compileClasspath += configurations.provided
+                    test.compileClasspath += configurations.provided
+                    test.runtimeClasspath += configurations.provided
+                }
+                println ":${project.name}:${thisname} Added the provided scope."
+            }
+
+            // https://groups.google.com/forum/#!topic/adt-dev/WIjtHjgoGwA
+            if(androidApplicationProject) {
+                println ":${project.name}:${thisname} Detected a Android Application project."
+                project.android.applicationVariants.all {
+                    variant -> variant.javaCompile.classpath += configurations.provided
+                }
+                println ":${project.name}:${thisname} Added the provided scope classpath."
+            }
+            if(androidLibraryProject) {
+                println ":${project.name}:${thisname} Detected a Android Library project."
+                project.android.libraryVariants.all {
+                    variant -> variant.javaCompile.classpath += configurations.provided
+                }
+                println ":${project.name}:${thisname} Added the provided scope classpath."
+            }
+
+            // http://www.gradle.org/docs/current/dsl/org.gradle.plugins.ide.idea.model.IdeaModule.html#org.gradle.plugins.ide.idea.model.IdeaModule:scopes
+            // http://gradle.1045684.n5.nabble.com/Idea-project-generation-and-provided-scope-td4684287.html
+            if(ideaProject) {
+                println ":${project.name}:${thisname} Detected a IDEA project."
+                project.idea.module {
+                    scopes.PROVIDED.plus += configurations.provided.compile
+                    scopes.PROVIDED.plus += configurations.provided.runtime
+                    scopes.COMPILE.minus += configurations.provided.compile
+                    scopes.RUNTIME.minus += configurations.provided.runtime
+                }
+                println ":${project.name}:${thisname} Added the provided scope classpath."
+            }
+
+            // http://qiita.com/k_ui/items/edfce12a2fac8fbfec04
+            // http://www.gradle.org/docs/current/dsl/org.gradle.plugins.ide.eclipse.model.EclipseClasspath.html
+            if(eclipseProject) {
+                println ":${project.name}:${thisname} Detected a Eclipse project."
+                project.eclipse.classpath {
+                    plusConfigurations += configurations.provided
+                    noExportConfigurations += configurations.provided
+                }
+                println ":${project.name}:${thisname} Added the provided scope classpath."
+            }
+
+            println ":${project.name}:${thisname} End"
+        }
+    }
+}
