@@ -3,7 +3,45 @@ def thisname = "addTaskArtifactAar"
 println "Loading ${thisname}"
 
 // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html
-task artifactAar(type: Zip) {
-    extension = 'aar'
-    destinationDir = file('build/libs')
+//task artifactAar(type: Zip) {
+//    extension = 'aar'
+//    destinationDir = file('build/libs')
+//}
+
+
+configurations {
+    ArtifactAar
+}
+
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+def artifactType = "Aar"
+def artifactTypeName = "AAR"
+
+def variants
+def variantsTypeName
+if(androidApplicationProject) {
+    variants = android.applicationVariants
+    variantsTypeName = "Android Application"
+}
+if(androidLibraryProject) {
+    variants = android.libraryVariants
+    variantsTypeName = "Android Library"
+}
+
+if(androidApplicationProject || androidLibraryProject) {
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+    variants.all { variant ->
+        def name = variant.name.capitalize()
+        def taskname = "packageArtifact${name}${artifactType}"
+
+        def task = project.tasks.create(taskname, Zip)
+        task.extension = 'aar'
+        task.destinationDir = file('build/libs/')
+
+        artifacts.add('archives', task);
+        artifacts.add('ArtifactAar', task);
+        println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
+    }
 }

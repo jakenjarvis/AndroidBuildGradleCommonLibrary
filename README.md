@@ -31,13 +31,13 @@ This is a my gradle common library for Android project. Add "git submodule" to t
         apply project, "allprojectsSetCompatibilityJavaVersion"
 
         // patch
-        apply(project, "allprojectsPatchDisableLintOptionsAbortOnError")
-        apply(project, "allprojectsPatchEnableAaptOptionsUseAaptPngCruncher")
+        apply project, "allprojectsPatchDisableLintOptionsAbortOnError"
+        apply project, "allprojectsPatchEnableAaptOptionsUseAaptPngCruncher"
     }
 
 ----------
 
-This "commonlibrary" extension is a wrapper thin "apply from".
+This "commonlibrary" extension is a wrapper thin "apply from". Path is automatic search from /gradle.
 
     commonlibrary {
         apply project, "allprojectsSetEncoding"
@@ -57,6 +57,7 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
 
     commonlibrary {
         // This is the library module to which you want to add the task.
+        // Task is added to "artifacts.archives" automatically.
         apply project, "addTaskArtifactAar"
         apply project, "addTaskArtifactApklib"
         apply project, "addTaskArtifactJar"
@@ -64,31 +65,35 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
         apply project, "addTaskArtifactSourceJar"
     }
 
-    artifacts {
-        archives artifactAar
-        archives artifactApklib
-        archives artifactJar
-        archives artifactSourceJar
-        archives artifactJavadocJar
-    }
-
     android.libraryVariants
     publishing {
         publications {
             releaseAar(MavenPublication) {
-                artifact artifactAar
+                // Note: Because the task is automatically added by the AndroidGradlePlugin,
+                // will not be able to recognize the task If it is not after evaluation.
+                afterEvaluate {
+                    artifact packageArtifactReleaseAar
+                }
             }
             releaseApklib(MavenPublication) {
-                artifact artifactApklib
+                afterEvaluate {
+                    artifact packageArtifactReleaseApklib
+                }
             }
             releaseJar(MavenPublication) {
-                artifact artifactJar
+                afterEvaluate {
+                    artifact packageArtifactReleaseJar
+                }
             }
             releaseSourceJar(MavenPublication) {
-                artifact artifactSourceJar
+                afterEvaluate {
+                    artifact packageArtifactReleaseSourceJar
+                }
             }
-            releaseJavaDocJar(MavenPublication) {
-                artifact artifactJavadocJar
+            releaseJavadocJar(MavenPublication) {
+                afterEvaluate {
+                    artifact packageArtifactReleaseJavadocJar
+                }
             }
         }
         repositories {

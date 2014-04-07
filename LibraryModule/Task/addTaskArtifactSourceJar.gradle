@@ -2,9 +2,49 @@
 def thisname = "addTaskArtifactSourceJar"
 println "Loading ${thisname}"
 
-task artifactSourceJar(type : Jar) {
-    from android.sourceSets.main.allSource
-    classifier = 'sources'
-    extension  = 'jar'
-    destinationDir = file('build/libs/')
+//task artifactSourceJar(type : Jar) {
+//    from android.sourceSets.main.allSource
+//    classifier = 'sources'
+//    extension  = 'jar'
+//    destinationDir = file('build/libs/')
+//}
+
+
+configurations {
+    ArtifactSourceJar
+}
+
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+def artifactType = "SourceJar"
+def artifactTypeName = "Java Source"
+
+def variants
+def variantsTypeName
+if(androidApplicationProject) {
+    variants = android.applicationVariants
+    variantsTypeName = "Android Application"
+}
+if(androidLibraryProject) {
+    variants = android.libraryVariants
+    variantsTypeName = "Android Library"
+}
+
+if(androidApplicationProject || androidLibraryProject) {
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+    variants.all { variant ->
+        def name = variant.name.capitalize()
+        def taskname = "packageArtifact${name}${artifactType}"
+
+        def task = project.tasks.create(taskname, Jar)
+        task.from variant.sourceSets.allSource
+        task.classifier = 'sources'
+        task.extension  = 'jar'
+        task.destinationDir = file('build/libs/')
+
+        artifacts.add('archives', task);
+        artifacts.add('ArtifactSourceJar', task);
+        println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
+    }
 }

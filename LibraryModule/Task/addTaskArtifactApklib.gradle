@@ -4,14 +4,59 @@ println "Loading ${thisname}"
 
 // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html
 // https://github.com/googlemaps/android-maps-utils/blob/master/library/build.gradle
-task artifactApklib(type: Zip) {
-    extension = 'apklib'
-    from 'AndroidManifest.xml'
-    into('res') {
-        from 'res'
+//task artifactApklib(type: Zip) {
+//    extension = 'apklib'
+//    from 'AndroidManifest.xml'
+//    into('res') {
+//        from 'res'
+//    }
+//    into('src') {
+//        from 'src'
+//    }
+//    destinationDir = file('build/libs/')
+//}
+
+
+configurations {
+    ArtifactApklib
+}
+
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+def artifactType = "Apklib"
+def artifactTypeName = "APKLIB"
+
+def variants
+def variantsTypeName
+if(androidApplicationProject) {
+    variants = android.applicationVariants
+    variantsTypeName = "Android Application"
+}
+if(androidLibraryProject) {
+    variants = android.libraryVariants
+    variantsTypeName = "Android Library"
+}
+
+if(androidApplicationProject || androidLibraryProject) {
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+    variants.all { variant ->
+        def name = variant.name.capitalize()
+        def taskname = "packageArtifact${name}${artifactType}"
+
+        def task = project.tasks.create(taskname, Zip)
+        task.extension = 'apklib'
+        task.from 'AndroidManifest.xml'
+        task.into('res') {
+            from 'res'
+        }
+        task.into('src') {
+            from 'src'
+        }
+        task.destinationDir = file('build/libs/')
+
+        artifacts.add('archives', task);
+        artifacts.add('ArtifactApklib', task);
+        println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
-    into('src') {
-        from 'src'
-    }
-    destinationDir = file('build/libs/')
 }

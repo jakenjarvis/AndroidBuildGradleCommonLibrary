@@ -6,6 +6,49 @@ println "Loading ${thisname}"
 // http://stackoverflow.com/questions/19034466/how-to-create-a-jar-with-gradle-without-publicly-revealing-source-code
 // http://stackoverflow.com/questions/16763090/how-to-export-library-to-jar-in-android-studio
 
+// http://stackoverflow.com/questions/21434554/copying-apk-file-in-android-gradle-project
+// http://stackoverflow.com/questions/19307341/android-library-gradle-release-jar
+
+
+configurations {
+    ArtifactJar
+}
+
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+def artifactType = "Jar"
+def artifactTypeName = "Java"
+
+def variants
+def variantsTypeName
+if(androidApplicationProject) {
+    variants = android.applicationVariants
+    variantsTypeName = "Android Application"
+}
+if(androidLibraryProject) {
+    variants = android.libraryVariants
+    variantsTypeName = "Android Library"
+}
+
+if(androidApplicationProject || androidLibraryProject) {
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+    variants.all { variant ->
+        def name = variant.name.capitalize()
+        def taskname = "packageArtifact${name}${artifactType}"
+
+        def task = project.tasks.create(taskname, Jar)
+        task.dependsOn variant.javaCompile
+        task.from variant.javaCompile.destinationDir
+        task.destinationDir = file('build/libs/')
+
+        artifacts.add('archives', task);
+        artifacts.add('ArtifactJar', task);
+        println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
+    }
+}
+
+
 
 //android.libraryVariants.all { variant ->
 //    File sourceFolder
@@ -25,11 +68,11 @@ println "Loading ${thisname}"
 // variant.name.capitalize()
 
 
-task artifactJar(type: Jar) {
-    // TODO: Dummy
-    extension = 'jar'
-    destinationDir = file('build/libs/')
-}
+//task artifactJar(type: Jar) {
+//    // TODO: Dummy
+//    extension = 'jar'
+//    destinationDir = file('build/libs/')
+//}
 
 /*
 task compileArtifactJava(type: JavaCompile) {
