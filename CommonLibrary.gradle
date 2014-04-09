@@ -34,6 +34,7 @@ class CommonLibraryPlugin implements Plugin<Project> {
 
     def findModuleByFrom(project, from)
     {
+        File result
         def tree = project.fileTree(this.rootProject.commonlibrary.rootDir)
                 .include("**/*${from}*.gradle")
                 .exclude("CommonLibrary.gradle")
@@ -41,7 +42,25 @@ class CommonLibraryPlugin implements Plugin<Project> {
         {
             throw new Exception("Module can not be found: ${from}")
         }
-        return tree.getSingleFile()
+        else if(tree.getFiles().size() >= 2)
+        {
+            FileTree filtered = tree.matching {
+                include("**/*${from}.gradle")
+            }
+            if(filtered.getFiles().size() == 1)
+            {
+                result = filtered.getSingleFile()
+            }
+            else
+            {
+                throw new Exception("Failed to identify the module: ${from}")
+            }
+        }
+        else
+        {
+            result = tree.getSingleFile()
+        }
+        return result
     }
 
     def apply(project, key, module)
