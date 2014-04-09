@@ -21,24 +21,15 @@ configurations {
     ArtifactApklib
 }
 
-def androidApplicationProject = project.plugins.hasPlugin('android')
 def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "Apklib"
 def artifactTypeName = "APKLIB"
 
-def variants
-def variantsTypeName
-if(androidApplicationProject) {
-    variants = android.applicationVariants
-    variantsTypeName = "Android Application"
-}
 if(androidLibraryProject) {
-    variants = android.libraryVariants
-    variantsTypeName = "Android Library"
-}
+    def variants = android.libraryVariants
+    def variantsTypeName = "Android Library"
 
-if(androidApplicationProject || androidLibraryProject) {
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
     variants.all { variant ->
         def name = variant.name.capitalize()

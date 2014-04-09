@@ -1,26 +1,21 @@
-// addTaskArtifactAar.gradle
-def thisname = "addTaskArtifactAar"
+// addTaskArtifactApk.gradle
+def thisname = "addTaskArtifactApk"
 println "Loading ${thisname}"
 
-// http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html
-//task artifactAar(type: Zip) {
-//    extension = 'aar'
-//    destinationDir = file('build/libs')
-//}
-
+// http://stackoverflow.com/questions/21434554/copying-apk-file-in-android-gradle-project
 
 configurations {
-    ArtifactAar
+    ArtifactApk
 }
 
-def androidLibraryProject = project.plugins.hasPlugin('android-library')
+def androidApplicationProject = project.plugins.hasPlugin('android')
 
-def artifactType = "Aar"
-def artifactTypeName = "AAR"
+def artifactType = "Apk"
+def artifactTypeName = "APK"
 
-if(androidLibraryProject) {
-    def variants = android.libraryVariants
-    def variantsTypeName = "Android Library"
+if(androidApplicationProject) {
+    def variants = android.applicationVariants
+    def variantsTypeName = "Android Application"
 
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
     variants.all { variant ->
@@ -28,13 +23,13 @@ if(androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Zip)
-        task.extension = 'aar'
+        task.extension = 'apk'
         task.archiveName = new File(variant.outputFile.getCanonicalFile().getName())
         //task.destinationDir = new File(variant.outputFile.getCanonicalFile().getParent())
-        task.destinationDir = file('build/libs/')
+        task.destinationDir = file('build/apk/')
 
         artifacts.add('archives', task);
-        artifacts.add('ArtifactAar', task);
+        artifacts.add('ArtifactApk', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
 }

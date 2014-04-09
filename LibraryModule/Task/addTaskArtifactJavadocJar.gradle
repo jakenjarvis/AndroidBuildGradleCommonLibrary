@@ -14,6 +14,7 @@ ext {
 // https://github.com/chrisbanes/gradle-mvn-push/issues/9
 // https://github.com/snowdream/android-autoupdater/blob/master/config/android-library.gradle
 // http://stackoverflow.com/questions/10895032/javadoc-with-gradle-dont-get-the-libraries-while-running-javadoc-task
+// http://stackoverflow.com/questions/17033878/generate-javadocs-with-android-gradle-plugin
 //task generateJavadoc(type: Javadoc) {
 //    source = android.sourceSets.main.allJava
 //    classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator)) + configurations.compile
@@ -40,24 +41,25 @@ configurations {
     ArtifactJavadocJar
 }
 
+def javaProject = project.plugins.hasPlugin('java')
 def androidApplicationProject = project.plugins.hasPlugin('android')
 def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "JavadocJar"
 def artifactTypeName = "JavadocJar"
 
-def variants
-def variantsTypeName
-if(androidApplicationProject) {
-    variants = android.applicationVariants
-    variantsTypeName = "Android Application"
-}
-if(androidLibraryProject) {
-    variants = android.libraryVariants
-    variantsTypeName = "Android Library"
-}
-
 if(androidApplicationProject || androidLibraryProject) {
+    def variants
+    def variantsTypeName
+    if(androidApplicationProject) {
+        variants = android.applicationVariants
+        variantsTypeName = "Android Application"
+    }
+    if(androidLibraryProject) {
+        variants = android.libraryVariants
+        variantsTypeName = "Android Library"
+    }
+
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
     variants.all { variant ->
         def name = variant.name.capitalize()
@@ -66,7 +68,7 @@ if(androidApplicationProject || androidLibraryProject) {
 
         def generatetask = project.tasks.create(generateTaskname, Javadoc)
         generatetask.source = variant.sourceSets.allJava
-        generatetask.classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator)) + configurations.compile
+        generatetask.classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator), variant.javaCompile.classpath) + configurations.compile
         generatetask.exclude '**/BuildConfig.java'
         generatetask.exclude '**/R.java'
 
@@ -88,4 +90,32 @@ if(androidApplicationProject || androidLibraryProject) {
         artifacts.add('ArtifactJavadocJar', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
+}
+
+if(javaProject) {
+    println ":${project.name}:${thisname} Detected a Java project."
+    def generateTaskname = "generateArtifactJavadoc"
+    def taskname = "packageArtifact${artifactType}"
+
+    def generatetask = project.tasks.create(generateTaskname, Javadoc)
+    generatetask.source = project.sourceSets.main.allJava
+    generatetask.classpath += configurations.compile
+
+    //generatetask.options.docEncoding = rootProject.defaultEncoding
+    //generatetask.options.charSet = rootProject.defaultEncoding
+    generatetask.options.links("http://docs.oracle.com/javase/7/docs/api/")
+    generatetask.options.links(project.ext.javadocLinks)
+    generatetask.options.locale = project.ext.javadocLocale
+
+    def task = project.tasks.create(taskname, Jar)
+    task.dependsOn generatetask
+    task.from generatetask.destinationDir
+    task.classifier = 'javadoc'
+    task.extension  = 'jar'
+    task.destinationDir = file('build/libs/')
+
+    artifacts.add('archives', task);
+    artifacts.add('ArtifactJar', task);
+
+    println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
 }
