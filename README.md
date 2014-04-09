@@ -53,7 +53,7 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
 
 ----------
 
-### build.gradle (android sub project) 
+### build.gradle (android library sub project) 
 
     commonlibrary {
         // This is the library module to which you want to add the task.
@@ -105,3 +105,43 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
 
 sample: build.gradle (android library sub project)  
 https://github.com/jakenjarvis/Android-SequentialTask/blob/master/SequentialTask/build.gradle
+
+
+### build.gradle (android application sub project) 
+
+    commonlibrary {
+        // This is the library module to which you want to add the task.
+        // Task is added to "artifacts.archives" automatically.
+        apply project, "addTaskArtifactApk"
+        apply project, "addTaskArtifactJavadocJar"
+        apply project, "addTaskArtifactSourceJar"
+    }
+
+    android.applicationVariants
+    publishing {
+        publications {
+            releaseApk(MavenPublication) {
+                // Note: Because the task is automatically added by the AndroidGradlePlugin,
+                // will not be able to recognize the task If it is not after evaluation.
+                afterEvaluate {
+                    artifact packageArtifactReleaseApk
+                }
+            }
+            releaseSourceJar(MavenPublication) {
+                afterEvaluate {
+                    artifact packageArtifactReleaseSourceJar
+                }
+            }
+            releaseJavadocJar(MavenPublication) {
+                afterEvaluate {
+                    artifact packageArtifactReleaseJavadocJar
+                }
+            }
+        }
+        repositories {
+            maven {
+                url(mavenRepository)
+            }
+        }
+    }
+
