@@ -1,0 +1,95 @@
+// addConfigurationApt.gradle
+def thisname = "addConfigurationApt"
+println "Loading ${thisname}"
+
+// gradle apt plugin...
+// https://github.com/uPhyca/gradle-android-apt-plugin
+// https://github.com/Jimdo/gradle-apt-plugin
+// https://bitbucket.org/hvisser/android-apt
+// https://github.com/hamsterksu/android-aptlibs-gradle-plugin
+
+// TODO: We should use the registerJavaGeneratingTask/addJavaSourceFoldersToModel?
+
+// http://stackoverflow.com/questions/19351168/gradle-annotations-flavors-wont-run-annotations-processor
+// https://github.com/excilys/androidannotations/issues/690
+// https://github.com/excilys/androidannotations/issues/676
+// http://stackoverflow.com/questions/16683944/androidannotations-nothing-generated-empty-activity/17840480#17840480
+
+// MEMO: This 'cannot find symbol' message is a bug in JDK6-Javac.
+// http://doma.seasar.org/reference/app_build.html
+
+ext {
+    javaCompilerAptOptionsArgs = [:] // key=variant.name, value=args
+}
+
+// ** Configuration Example **
+// android.applicationVariants.all { variant ->
+//     javaCompilerAptOptionsArgs += ["${variant.name}" : ['-processor', 'com.tojc.ormlite.android.compiler.ContractAnnotationProcessor']]
+// }
+
+
+def configurationApt = project.configurations.create('apt')
+configurationApt.extendsFrom project.configurations.getByName('compile')
+
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+if(androidApplicationProject || androidLibraryProject) {
+    def variants
+    def variantsTypeName
+    if(androidApplicationProject) {
+        variants = android.applicationVariants
+        variantsTypeName = "Android Application"
+    }
+    if(androidLibraryProject) {
+        variants = android.libraryVariants
+        variantsTypeName = "Android Library"
+    }
+
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+
+    // This is deliberately delayed. It's order to give the timing for setting the javaCompilerAptOptionsArgs.
+    afterEvaluate {
+        variants.all { variant ->
+            def name = variant.name.capitalize()
+
+            def aptOutputBaseDir = file("$buildDir/source/generated")
+            def aptOutputVariantDir = new File(aptOutputBaseDir, variant.dirName)
+            //def sourceSetName = new File(variant.dirName).getName()
+
+            //android.sourceSets[sourceSetName].java.srcDirs += aptOutputVariantDir.getPath()
+            //variant.javaCompile.classpath += project.configurations.apt
+            //variant.addJavaSourceFoldersToModel(aptOutputVariantDir)
+
+            variant.javaCompile.options.compilerArgs += [
+                '-processorpath', project.configurations.apt.getAsPath(),
+            ]
+            javaCompilerAptOptionsArgs.findAll { it.key == variant.name }.each { key, value ->
+                //'-processor', "com.tojc.ormlite.android.compiler.ContractAnnotationProcessor",
+                //'-AandroidManifestFile=' + variant.processResources.manifestFile,
+                //'-AresourcePackageName=com.tojc.ormlite.android.ormlitecontentprovider.compiler.sample',
+                variant.javaCompile.options.compilerArgs += value
+            }
+            variant.javaCompile.options.compilerArgs += [
+                '-s', aptOutputVariantDir
+            ]
+
+            println "variant:${name}.compilerArgs {"
+            variant.javaCompile.options.compilerArgs.each { value ->
+                println value
+            }
+            println "}"
+
+            variant.javaCompile.source = variant.javaCompile.source.filter { p ->
+                return !p.getPath().startsWith(aptOutputBaseDir.getPath())
+            }
+
+            variant.javaCompile.doFirst {
+                println ":${project.name}:${thisname}:[variant:${name}]: doFirst.mkdirs( ${aptOutputVariantDir} )."
+                aptOutputVariantDir.mkdirs()
+            }
+
+            println ":${project.name}:${thisname}:[variant:${name}]: Register Apt."
+        }
+    }
+}
