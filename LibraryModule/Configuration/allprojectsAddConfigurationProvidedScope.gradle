@@ -25,16 +25,18 @@ gradle.afterProject {eventproject, projectState ->
             def ideaProject = project.plugins.hasPlugin('idea')
             def eclipseProject = project.plugins.hasPlugin('eclipse')
 
+            project.configurations {
+                provided
+                provided.extendsFrom(compile)
+            }
+
             // http://stackoverflow.com/questions/18738888/how-to-use-provided-scope-for-jar-file-in-gradle-build
             if(javaProject || groovyProject || androidProject) {
                 println ":${project.name}:${thisname} Detected a Java|Groovy|Android project."
-                project.configurations {
-                    provided
-                }
                 project.sourceSets {
-                    main.compileClasspath += configurations.provided
-                    test.compileClasspath += configurations.provided
-                    test.runtimeClasspath += configurations.provided
+                    main.compileClasspath += project.configurations.provided
+                    test.compileClasspath += project.configurations.provided
+                    test.runtimeClasspath += project.configurations.provided
                 }
                 println ":${project.name}:${thisname} Added the provided scope."
             }
@@ -43,14 +45,14 @@ gradle.afterProject {eventproject, projectState ->
             if(androidApplicationProject) {
                 println ":${project.name}:${thisname} Detected a Android Application project."
                 project.android.applicationVariants.all {
-                    variant -> variant.javaCompile.classpath += configurations.provided
+                    variant -> variant.javaCompile.classpath += project.configurations.provided
                 }
                 println ":${project.name}:${thisname} Added the provided scope classpath."
             }
             if(androidLibraryProject) {
                 println ":${project.name}:${thisname} Detected a Android Library project."
                 project.android.libraryVariants.all {
-                    variant -> variant.javaCompile.classpath += configurations.provided
+                    variant -> variant.javaCompile.classpath += project.configurations.provided
                 }
                 println ":${project.name}:${thisname} Added the provided scope classpath."
             }
@@ -60,10 +62,18 @@ gradle.afterProject {eventproject, projectState ->
             if(ideaProject) {
                 println ":${project.name}:${thisname} Detected a IDEA project."
                 project.idea.module {
-                    scopes.PROVIDED.plus += configurations.provided.compile
-                    scopes.PROVIDED.plus += configurations.provided.runtime
-                    scopes.COMPILE.minus += configurations.provided.compile
-                    scopes.RUNTIME.minus += configurations.provided.runtime
+                    // TODO: idea plugin seems to be incomplete when it is automatically loaded by the Android Studio. Timing is bad?
+                    //       Gradle 'projectname' project refresh failed: Cannot get property 'plus' on null object
+                    try {
+                        scopes.PROVIDED.plus += project.configurations.provided
+
+                        //scopes.PROVIDED.plus += project.configurations.provided.compile
+                        //scopes.PROVIDED.plus += project.configurations.provided.runtime
+                        //scopes.COMPILE.minus += project.configurations.provided.compile
+                        //scopes.RUNTIME.minus += project.configurations.provided.runtime
+                    } catch(NullPointerException e) {
+                        println ":${project.name}:${thisname} ${e}"
+                    }
                 }
                 println ":${project.name}:${thisname} Added the provided scope classpath."
             }
@@ -73,8 +83,8 @@ gradle.afterProject {eventproject, projectState ->
             if(eclipseProject) {
                 println ":${project.name}:${thisname} Detected a Eclipse project."
                 project.eclipse.classpath {
-                    plusConfigurations += configurations.provided
-                    noExportConfigurations += configurations.provided
+                    plusConfigurations += project.configurations.provided
+                    noExportConfigurations += project.configurations.provided
                 }
                 println ":${project.name}:${thisname} Added the provided scope classpath."
             }
