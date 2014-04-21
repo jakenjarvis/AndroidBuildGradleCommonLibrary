@@ -1,0 +1,137 @@
+// addTaskCodeQualityCheckstyle.gradle
+def thisname = "addTaskCodeQualityCheckstyle"
+println "Loading ${thisname}"
+
+configurations {
+    codequality
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    codequality 'com.puppycrawl.tools:checkstyle:5.6'
+}
+
+def javaProject = project.plugins.hasPlugin('java')
+def androidApplicationProject = project.plugins.hasPlugin('android')
+def androidLibraryProject = project.plugins.hasPlugin('android-library')
+
+if(androidApplicationProject || androidLibraryProject) {
+    def variantsTypeName
+    if(androidApplicationProject) {
+        variantsTypeName = "Android Application"
+    }
+    if(androidLibraryProject) {
+        variantsTypeName = "Android Library"
+    }
+
+    println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
+    apply plugin: AndroidCheckstylePlugin
+    println ":${project.name}:${thisname} apply plugin: AndroidCheckstylePlugin"
+}
+
+if(javaProject) {
+    println ":${project.name}:${thisname} Detected a Java project."
+    // http://www.gradle.org/docs/current/userguide/checkstyle_plugin.html
+    apply plugin: 'checkstyle'
+    println ":${project.name}:${thisname} apply plugin: checkstyle"
+}
+
+class AndroidCheckstylePlugin implements Plugin<Project> {
+    void apply(Project project) {
+        project.extensions.create("checkstyle", AndroidCheckstylePluginExtension, project)
+
+        def taskname = "checkstyleAndroid"
+        def task = project.tasks.create(taskname, AndroidCheckstyleTask)
+        task.gradleProject = project
+
+        def checktask = project.tasks.getByName('check')
+        checktask.dependsOn(task)
+    }
+}
+
+// http://www.gradle.org/docs/current/dsl/org.gradle.api.plugins.quality.CheckstyleExtension.html
+class AndroidCheckstylePluginExtension {
+    def String description = null
+    def String group = null
+    def File configFile = null
+    def File xslFile = null
+    def File outputFile = null
+    def FileCollection checkstyleClasspath = null
+    def Boolean ignoreFailures = false
+    def Boolean showViolations = true
+
+    AndroidCheckstylePluginExtension(Project project)
+    {
+        this.description = 'Runs checkstyle against Android sourcesets.'
+        this.group = 'Code Quality'
+        this.configFile = new File("$project.rootDir/config/checkstyle/checkstyle.xml")
+        this.xslFile = new File("$project.rootDir/config/checkstyle/checkstyle-noframes-sorted.xsl")
+        this.outputFile = new File("$project.buildDir/reports/checkstyle/checkstyle-${project.name}.xml")
+        this.checkstyleClasspath = project.configurations.codequality
+        this.ignoreFailures = false
+        this.showViolations = true
+    }
+}
+
+
+// https://gist.github.com/sethrylan/6002657
+import org.gradle.api.internal.project.IsolatedAntBuilder
+
+/**
+ * See parameters at http://checkstyle.sourceforge.net/anttask.html
+ */
+class AndroidCheckstyleTask extends DefaultTask {
+    Project gradleProject
+
+    String description
+    String group
+    @InputFile @Optional File configFile
+    @InputFile @Optional File xslFile
+    @OutputFile @Optional File outputFile
+    FileCollection checkstyleClasspath
+    Boolean ignoreFailures
+    Boolean showViolations
+
+    @TaskAction
+    def runCheckstyle() {
+        this.description = this.gradleProject.checkstyle.description
+        this.group = this.gradleProject.checkstyle.group
+        this.configFile = this.gradleProject.checkstyle.configFile
+        this.xslFile = this.gradleProject.checkstyle.xslFile
+        this.outputFile = this.gradleProject.checkstyle.outputFile
+        this.checkstyleClasspath = this.gradleProject.checkstyle.checkstyleClasspath
+        this.ignoreFailures = this.gradleProject.checkstyle.ignoreFailures
+        this.showViolations = this.gradleProject.checkstyle.showViolations
+
+        outputFile.parentFile.mkdirs()
+        def antBuilder = services.get(IsolatedAntBuilder)
+        antBuilder.withClasspath(checkstyleClasspath).execute {
+            ant.taskdef(name: 'checkstyle', classname: 'com.puppycrawl.tools.checkstyle.CheckStyleTask')
+            // see also, maxWarnings and failureProperty arguments
+            ant.checkstyle(config: configFile, failOnViolation: !ignoreFailures) {
+                fileset(dir: gradleProject.projectDir.getPath()) {
+                    gradleProject.android.sourceSets.each { sourceSet ->
+                        sourceSet.java.each { file ->
+                            include(name: gradleProject.relativePath(file))
+                        }
+                    }
+                }
+                if (showViolations) {
+                    formatter(type: 'plain', useFile: false)
+                }
+                formatter(type: 'xml', toFile: outputFile)
+            }
+
+            if (outputFile.exists()) {
+                ant.xslt(in:   outputFile,
+                        style: xslFile,
+                        out:   outputFile.absolutePath.replaceFirst(~/\.[^\.]+$/, ".html")
+                )
+            }
+        }
+    }
+}
+
