@@ -1,8 +1,8 @@
-// addTaskCodeQualityCheckstyle.gradle
-def thisname = "addTaskCodeQualityCheckstyle"
+// addTaskCodeQualityPmd.gradle
+def thisname = "addTaskCodeQualityPmd"
 println "Loading ${thisname}"
 
-// http://www.gradle.org/docs/current/userguide/checkstyle_plugin.html
+// http://www.gradle.org/docs/current/userguide/pmd_plugin.html
 
 def javaProject = project.plugins.hasPlugin('java')
 def androidApplicationProject = project.plugins.hasPlugin('android')
@@ -21,19 +21,18 @@ if(androidApplicationProject || androidLibraryProject) {
     }
 
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
-    apply plugin: 'checkstyle'
-    println ":${project.name}:${thisname} apply plugin: checkstyle"
+    apply plugin: 'pmd'
+    println ":${project.name}:${thisname} apply plugin: pmd"
 
     afterEvaluate { project ->
         variants.all { variant ->
             def name = variant.name.capitalize()
-            def taskname = "checkstyle${name}"
+            def taskname = "pmd${name}"
 
-            def task = project.tasks.create(taskname, Checkstyle)
+            def task = project.tasks.create(taskname, Pmd)
             task.source files(variant.sourceSets.allJava.srcDirs)
-            task.include '**/*.java'
-            task.exclude '**/gen/**'
-            task.classpath = files()
+
+            // https://github.com/pmd/pmd/tree/master/pmd/src/main/resources/rulesets/java
 
             def checktask = project.tasks.getByName('check')
             checktask.dependsOn(task)
@@ -45,6 +44,6 @@ if(androidApplicationProject || androidLibraryProject) {
 
 if(javaProject) {
     println ":${project.name}:${thisname} Detected a Java project."
-    apply plugin: 'checkstyle'
-    println ":${project.name}:${thisname} apply plugin: checkstyle"
+    apply plugin: 'pmd'
+    println ":${project.name}:${thisname} apply plugin: pmd"
 }

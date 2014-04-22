@@ -1,8 +1,8 @@
-// addTaskCodeQualityCheckstyle.gradle
-def thisname = "addTaskCodeQualityCheckstyle"
+// addTaskCodeQualityFindbugs.gradle
+def thisname = "addTaskCodeQualityFindbugs"
 println "Loading ${thisname}"
 
-// http://www.gradle.org/docs/current/userguide/checkstyle_plugin.html
+// http://www.gradle.org/docs/current/userguide/findbugs_plugin.html
 
 def javaProject = project.plugins.hasPlugin('java')
 def androidApplicationProject = project.plugins.hasPlugin('android')
@@ -21,15 +21,19 @@ if(androidApplicationProject || androidLibraryProject) {
     }
 
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
-    apply plugin: 'checkstyle'
-    println ":${project.name}:${thisname} apply plugin: checkstyle"
+    apply plugin: 'findbugs'
+    println ":${project.name}:${thisname} apply plugin: findbugs"
 
     afterEvaluate { project ->
         variants.all { variant ->
             def name = variant.name.capitalize()
-            def taskname = "checkstyle${name}"
+            def taskname = "findbugs${name}"
 
-            def task = project.tasks.create(taskname, Checkstyle)
+            def task = project.tasks.create(taskname, FindBugs)
+
+            //task.classes = files(variant.sourceSets.main.output.classesDir)
+            task.classes = fileTree("${buildDir}/classes/${variant.name}")
+
             task.source files(variant.sourceSets.allJava.srcDirs)
             task.include '**/*.java'
             task.exclude '**/gen/**'
@@ -45,6 +49,6 @@ if(androidApplicationProject || androidLibraryProject) {
 
 if(javaProject) {
     println ":${project.name}:${thisname} Detected a Java project."
-    apply plugin: 'checkstyle'
-    println ":${project.name}:${thisname} apply plugin: checkstyle"
+    apply plugin: 'findbugs'
+    println ":${project.name}:${thisname} apply plugin: findbugs"
 }
