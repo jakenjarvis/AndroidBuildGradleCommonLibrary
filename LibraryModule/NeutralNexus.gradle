@@ -1,0 +1,240 @@
+// NeutralNexus.gradle
+def thisname = "NeutralNexus"
+println "Loading ${thisname}"
+
+apply plugin: NeutralNexusPlugin
+
+// original author: Benjamin Muschko
+// https://github.com/bmuschko/gradle-nexus-plugin
+// I hope that this will be integrated into the head family.
+
+class NeutralNexusPlugin implements Plugin<Project> {
+    static final String NEXUS_USERNAME = 'nexusUsername'
+    static final String NEXUS_PASSWORD = 'nexusPassword'
+
+    private Project project
+
+    void apply(Project project) {
+        project.plugins.apply(MavenPlugin)
+        project.plugins.apply(SigningPlugin)
+
+        this.project = project
+
+        NeutralNexusPluginExtension extension = project.extensions.create('nexus', NeutralNexusPluginExtension, this)
+
+        configureTasks(project, extension)
+        configureSigning(project, extension)
+        configurePom(project, extension)
+        configureUpload(project, extension)
+    }
+
+    public Project getProject() {
+        return this.project
+    }
+
+    private void configureTasks(Project project, NeutralNexusPluginExtension extension) {
+        //project.afterEvaluate {
+        project.gradle.projectsEvaluated {
+            changeInstallTaskConfiguration(project, extension)
+        }
+    }
+
+    private void changeInstallTaskConfiguration(Project project, NeutralNexusPluginExtension extension) {
+        if(!extension.usesStandardConfiguration()) {
+            def installTask = project.tasks.findByName(MavenPlugin.INSTALL_TASK_NAME)
+
+            if(installTask) {
+                installTask.configuration = project.configurations[extension.configuration]
+            }
+        }
+    }
+
+    private void configureSigning(Project project, NeutralNexusPluginExtension extension) {
+        //project.afterEvaluate {
+        project.gradle.projectsEvaluated {
+            project.signing {
+                // MEMO: This is required if you change the configuration. There is a issue that Asc file will not be published.
+                configuration = project.configurations[extension.configuration]
+
+                required {
+                    project.gradle.taskGraph.hasTask(extension.getUploadTaskPath(project)) && !project.version.endsWith('SNAPSHOT')
+                }
+
+                sign project.configurations[extension.configuration]
+
+                project.gradle.taskGraph.whenReady {
+                    signPomForUpload(project, extension)
+                    signInstallPom(project, extension)
+                }
+            }
+        }
+    }
+
+    private void signPomForUpload(Project project, NeutralNexusPluginExtension extension) {
+        def uploadTasks = project.tasks.withType(Upload).matching { it.path == extension.getUploadTaskPath(project) }
+
+        uploadTasks.each { task ->
+            task.repositories.mavenDeployer() {
+                beforeDeployment { MavenDeployment deployment ->
+                    project.signing.signPom(deployment)
+                }
+            }
+        }
+    }
+
+    private void signInstallPom(Project project, NeutralNexusPluginExtension extension) {
+        def installTasks = project.tasks.withType(Upload).matching { it.path == extension.getInstallTaskPath(project) }
+
+        installTasks.each { task ->
+            task.repositories.mavenInstaller() {
+                beforeDeployment { MavenDeployment deployment ->
+                    project.signing.signPom(deployment)
+                }
+            }
+        }
+    }
+
+    private void configurePom(Project project, NeutralNexusPluginExtension extension) {
+        project.ext.modifyPom = { Closure modification ->
+            project.afterEvaluate {
+                project.ext.poms.each {
+                    it.whenConfigured { project.configure(it, modification) }
+                }
+            }
+        }
+
+        project.afterEvaluate {
+            def installTask = project.tasks.findByName(MavenPlugin.INSTALL_TASK_NAME)
+            def uploadTask = project.tasks.getByName(extension.uploadTaskName)
+
+            if(installTask) {
+                project.ext.poms = [installTask.repositories.mavenInstaller(), uploadTask.repositories.mavenDeployer()]*.pom
+            } else {
+                project.ext.poms = [uploadTask.repositories.mavenDeployer()]*.pom
+            }
+        }
+    }
+
+    private void configureUpload(Project project, NeutralNexusPluginExtension extension) {
+        //project.afterEvaluate {
+        project.gradle.projectsEvaluated {
+            if(extension.localPublishing) {
+                configureUploadLocal(project, extension)
+            } else {
+                configureUploadRemote(project, extension)
+            }
+        }
+    }
+
+    private void configureUploadRemote(Project project, NeutralNexusPluginExtension extension) {
+        project.tasks.getByName(extension.uploadTaskName).repositories.mavenDeployer() {
+            project.gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
+                if(taskGraph.hasTask(extension.getUploadTaskPath(project))) {
+                    Console console = System.console()
+
+                    String nexusUsername = project.hasProperty(NEXUS_USERNAME) ?
+                            project.property(NEXUS_USERNAME) :
+                            console.readLine('\nPlease specify username: ')
+
+                    String nexusPassword = project.hasProperty(NEXUS_PASSWORD) ?
+                            project.property(NEXUS_PASSWORD) :
+                            new String(console.readPassword('\nPlease specify password: '))
+
+                    if(extension.repositoryUrl) {
+                        repository(url: extension.repositoryUrl) {
+                            authentication(userName: nexusUsername, password: nexusPassword)
+                        }
+                    }
+
+                    if(extension.snapshotRepositoryUrl) {
+                        snapshotRepository(url: extension.snapshotRepositoryUrl) {
+                            authentication(userName: nexusUsername, password: nexusPassword)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void configureUploadLocal(Project project, NeutralNexusPluginExtension extension) {
+        project.tasks.getByName(extension.uploadTaskName).repositories.mavenDeployer() {
+            project.gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
+                if(taskGraph.hasTask(extension.getUploadTaskPath(project))) {
+                    if(extension.localRepository) {
+                        repository(url: extension.localRepository)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks to see if Java plugin got applied to project.
+     *
+     * @param project Project
+     * @return Flag
+     */
+    private boolean hasJavaPlugin(Project project) {
+        project.plugins.hasPlugin(JavaPlugin)
+    }
+
+    /**
+     * Checks to see if Groovy plugin got applied to project.
+     *
+     * @param project Project
+     * @return Flag
+     */
+    private boolean hasGroovyPlugin(Project project) {
+        project.plugins.hasPlugin(GroovyPlugin)
+    }
+}
+
+class NeutralNexusPluginExtension {
+    String configuration = Dependency.ARCHIVES_CONFIGURATION
+
+    Boolean localPublishing = false
+
+    String localRepository
+    String repositoryUrl
+    String snapshotRepositoryUrl
+
+    private NeutralNexusPlugin plugin
+
+    NeutralNexusPluginExtension(plugin) {
+        this.plugin = plugin
+        Project project = this.plugin.getProject()
+
+        this.localRepository = new File("${project.rootDir}/repository").toURI().toString()
+        this.repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        this.snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+
+    def nexus(Closure closure) {
+        closure.delegate = this
+        closure()
+    }
+
+    String getUploadTaskName() {
+        "upload${configuration.capitalize()}"
+    }
+
+    String getUploadTaskPath(Project project) {
+        isRootProject(project) ? ":$uploadTaskName" : "$project.path:$uploadTaskName"
+    }
+
+    String getInstallTaskPath(Project project) {
+        isRootProject(project) ? ":$MavenPlugin.INSTALL_TASK_NAME" : "$project.path:$MavenPlugin.INSTALL_TASK_NAME"
+    }
+
+    private boolean isRootProject(Project project) {
+        project.rootProject == project
+    }
+
+    void setConfiguration(config) {
+        configuration = config instanceof Configuration ? config.name : config
+    }
+
+    boolean usesStandardConfiguration() {
+        configuration == Dependency.ARCHIVES_CONFIGURATION
+    }
+}
