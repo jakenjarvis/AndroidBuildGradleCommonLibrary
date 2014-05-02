@@ -109,4 +109,30 @@ class CommonLibraryPluginExtension {
         }
         this.rootPlugin.apply(project, key, module)
     }
+
+    def generateArchiveName(AbstractArchiveTask task, variant) {
+        // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip:archiveName
+        // Default ArchiveName: ${baseName}-${appendix}-${version}-${classifier}.${extension}
+        def noneBaseName = task.baseName ?: ""
+        def hyphenAppendix = task.appendix ? "-${task.appendix}" : ""
+        def hyphenVariantName = variant?.baseName ? "-${variant.baseName}" : ""
+
+        def hyphenSignedApk
+        if(variant) {
+            // MEMO: I want to solve dynamically without import for the project coexistence of Android and Java.
+            try{
+                hyphenSignedApk = variant.isSigningReady() ? "-unaligned" : "-unsigned"
+            }catch (MissingMethodException e) {
+                hyphenSignedApk = ""
+            }
+        } else {
+            hyphenSignedApk = ""
+        }
+
+        def hyphenVersion = task.version ? "-${task.version}" : ""
+        def hyphenClassifier = task.classifier ? "-${task.classifier}" : ""
+        def periodExtension = task.extension ? ".${task.extension}" : ""
+        return "${noneBaseName}${hyphenAppendix}${hyphenVariantName}${hyphenSignedApk}${hyphenVersion}${hyphenClassifier}${periodExtension}"
+    }
+
 }

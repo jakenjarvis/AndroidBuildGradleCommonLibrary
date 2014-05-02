@@ -84,9 +84,10 @@ if(androidApplicationProject || androidLibraryProject) {
         task.from generatetask.destinationDir
         task.classifier = 'javadoc'
         task.extension  = 'jar'
+        task.archiveName = commonlibrary.generateArchiveName(task, variant)
         task.destinationDir = file('build/libs/')
 
-        artifacts.add('archives', task);
+        //artifacts.add('archives', task);
         artifacts.add('ArtifactJavadocJar', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
@@ -112,9 +113,10 @@ if(javaProject) {
     task.from generatetask.destinationDir
     task.classifier = 'javadoc'
     task.extension  = 'jar'
+    task.archiveName = commonlibrary.generateArchiveName(task, null)
     task.destinationDir = file('build/libs/')
 
-    artifacts.add('archives', task);
+    //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);
 
     println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"

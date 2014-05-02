@@ -42,9 +42,10 @@ if(androidApplicationProject || androidLibraryProject) {
         task.from variant.sourceSets.allSource
         task.classifier = 'sources'
         task.extension  = 'jar'
+        task.archiveName = commonlibrary.generateArchiveName(task, variant)
         task.destinationDir = file('build/libs/')
 
-        artifacts.add('archives', task);
+        //artifacts.add('archives', task);
         artifacts.add('ArtifactSourceJar', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
@@ -58,9 +59,10 @@ if(javaProject) {
     task.from project.sourceSets.main.allSource
     task.classifier = 'sources'
     task.extension  = 'jar'
+    task.archiveName = commonlibrary.generateArchiveName(task, null)
     task.destinationDir = file('build/libs/')
 
-    artifacts.add('archives', task);
+    //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);
 
     println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"

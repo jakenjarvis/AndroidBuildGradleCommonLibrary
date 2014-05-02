@@ -37,16 +37,21 @@ if(androidLibraryProject) {
 
         def task = project.tasks.create(taskname, Zip)
         task.extension = 'apklib'
-        task.from 'AndroidManifest.xml'
+        task.from "${buildDir}/bundles/${variant.dirName}/AndroidManifest.xml"
         task.into('res') {
-            from 'res'
+            from variant.sourceSets*.getResDirectories()   //TODO: variant.mergeResources.outputDir ?
         }
         task.into('src') {
-            from 'src'
+            from variant.sourceSets*.getJavaDirectories()
         }
+
+        task.archiveName = commonlibrary.generateArchiveName(task, variant)
         task.destinationDir = file('build/libs/')
 
-        artifacts.add('archives', task);
+        task.dependsOn variant.assemble
+        variant.assemble.finalizedBy task
+
+        //artifacts.add('archives', task);
         artifacts.add('ArtifactApklib', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }

@@ -57,7 +57,6 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
 
     commonlibrary {
         // This is the library module to which you want to add the task.
-        // Task is added to "artifacts.archives" automatically.
         apply project, "addTaskArtifactAar"
         apply project, "addTaskArtifactApklib"
         apply project, "addTaskArtifactJar"
@@ -65,33 +64,27 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/build.gradle
         apply project, "addTaskArtifactSourceJar"
     }
 
+    artifacts {
+        afterEvaluate {
+            archives packageArtifactReleaseAar
+            archives packageArtifactReleaseApklib
+            archives packageArtifactReleaseJar
+            archives packageArtifactReleaseSourceJar
+            archives packageArtifactReleaseJavadocJar
+        }
+    }
+
     android.libraryVariants
     publishing {
         publications {
-            releaseAar(MavenPublication) {
+            releaseArtifact(MavenPublication) {
                 // Note: Because the task is automatically added by the AndroidGradlePlugin,
                 // will not be able to recognize the task If it is not after evaluation.
                 afterEvaluate {
                     artifact packageArtifactReleaseAar
-                }
-            }
-            releaseApklib(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseApklib
-                }
-            }
-            releaseJar(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseJar
-                }
-            }
-            releaseSourceJar(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseSourceJar
-                }
-            }
-            releaseJavadocJar(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseJavadocJar
                 }
             }
@@ -117,23 +110,23 @@ https://github.com/jakenjarvis/Android-SequentialTask/blob/master/SequentialTask
         apply project, "addTaskArtifactSourceJar"
     }
 
+    artifacts {
+        afterEvaluate {
+            archives packageArtifactReleaseApk
+            archives packageArtifactReleaseSourceJar
+            archives packageArtifactReleaseJavadocJar
+        }
+    }
+
     android.applicationVariants
     publishing {
         publications {
-            releaseApk(MavenPublication) {
+            releaseArtifact(MavenPublication) {
                 // Note: Because the task is automatically added by the AndroidGradlePlugin,
                 // will not be able to recognize the task If it is not after evaluation.
                 afterEvaluate {
                     artifact packageArtifactReleaseApk
-                }
-            }
-            releaseSourceJar(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseSourceJar
-                }
-            }
-            releaseJavadocJar(MavenPublication) {
-                afterEvaluate {
                     artifact packageArtifactReleaseJavadocJar
                 }
             }

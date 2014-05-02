@@ -24,11 +24,18 @@ if(androidApplicationProject) {
 
         def task = project.tasks.create(taskname, Zip)
         task.extension = 'apk'
-        task.archiveName = new File(variant.outputFile.getCanonicalFile().getName())
+        //task.archiveName = new File(variant.outputFile.getCanonicalFile().getName())
+        task.archiveName = commonlibrary.generateArchiveName(task, variant)
         //task.destinationDir = new File(variant.outputFile.getCanonicalFile().getParent())
         task.destinationDir = file('build/apk/')
 
-        artifacts.add('archives', task);
+        // https://groups.google.com/forum/#!topic/adt-dev/4_-5NvxuFB0
+        variant.outputFile = task.archivePath
+
+        task.dependsOn variant.assemble
+        variant.assemble.finalizedBy task
+
+        //artifacts.add('archives', task);
         artifacts.add('ArtifactApk', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }

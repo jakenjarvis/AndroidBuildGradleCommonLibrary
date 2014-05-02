@@ -41,9 +41,13 @@ if(androidApplicationProject || androidLibraryProject) {
         def task = project.tasks.create(taskname, Jar)
         task.dependsOn variant.javaCompile
         task.from variant.javaCompile.destinationDir
+        task.archiveName = commonlibrary.generateArchiveName(task, variant)
         task.destinationDir = file('build/libs/')
 
-        artifacts.add('archives', task);
+        task.dependsOn variant.assemble
+        variant.assemble.finalizedBy task
+
+        //artifacts.add('archives', task);
         artifacts.add('ArtifactJar', task);
         println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
     }
@@ -56,9 +60,13 @@ if(javaProject) {
     def task = project.tasks.create(taskname, Jar)
     task.dependsOn project.compileJava
     task.from project.compileJava.destinationDir
+    task.archiveName = commonlibrary.generateArchiveName(task, null)
     task.destinationDir = file('build/libs/')
 
-    artifacts.add('archives', task);
+    task.dependsOn project.assemble
+    project.assemble.finalizedBy task
+
+    //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);
 
     println ":${project.name}:${thisname} Register ${artifactTypeName} Artifact. [${taskname}]"
