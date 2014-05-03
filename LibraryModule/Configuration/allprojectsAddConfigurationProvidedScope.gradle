@@ -22,6 +22,8 @@ gradle.afterProject {eventproject, projectState ->
             def androidLibraryProject = project.plugins.hasPlugin('android-library')
             def androidProject = androidApplicationProject || androidLibraryProject
 
+            def mavenProject = project.plugins.hasPlugin('maven')
+
             def ideaProject = project.plugins.hasPlugin('idea')
             def eclipseProject = project.plugins.hasPlugin('eclipse')
 
@@ -55,6 +57,14 @@ gradle.afterProject {eventproject, projectState ->
                     variant -> variant.javaCompile.classpath += project.configurations.provided
                 }
                 println ":${project.name}:${thisname} Added the provided scope classpath."
+            }
+
+            // http://www.gradle.org/docs/current/userguide/maven_plugin.html
+            // http://www.gradle.org/docs/current/javadoc/org/gradle/api/artifacts/maven/Conf2ScopeMappingContainer.html
+            if(mavenProject) {
+                println ":${project.name}:${thisname} Detected a Maven project."
+                Conf2ScopeMappingContainer scopeMappings = project.conf2ScopeMappings
+                scopeMappings.addMapping(MavenPlugin.PROVIDED_COMPILE_PRIORITY, project.configurations.provided, Conf2ScopeMappingContainer.PROVIDED)
             }
 
             // http://www.gradle.org/docs/current/dsl/org.gradle.plugins.ide.idea.model.IdeaModule.html#org.gradle.plugins.ide.idea.model.IdeaModule:scopes
