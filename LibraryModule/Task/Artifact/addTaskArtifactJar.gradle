@@ -63,8 +63,8 @@ if(javaProject) {
     task.archiveName = commonlibrary.generateArchiveName(task, null)
     task.destinationDir = file('build/libs/')
 
-    task.dependsOn project.assemble
-    project.assemble.finalizedBy task
+    task.dependsOn project.jar
+    project.jar.finalizedBy task
 
     //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);
