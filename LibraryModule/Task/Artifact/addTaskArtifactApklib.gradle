@@ -36,6 +36,7 @@ if(androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Zip)
+        task.classifier = 'apklib'
         task.extension = 'apklib'
         task.from "${buildDir}/bundles/${variant.dirName}/AndroidManifest.xml"
         task.into('res') {

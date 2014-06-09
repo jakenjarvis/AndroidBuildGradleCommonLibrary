@@ -29,6 +29,7 @@ if(androidLibraryProject) {
         //def copyTaskname = "copyArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Zip)
+        task.classifier = 'aar'
         task.extension = 'aar'
         //task.archiveName = new File(variant.outputFile.getCanonicalFile().getName())
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
