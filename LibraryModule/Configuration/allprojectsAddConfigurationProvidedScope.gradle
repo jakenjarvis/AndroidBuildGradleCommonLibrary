@@ -69,13 +69,14 @@ gradle.afterProject {eventproject, projectState ->
 
             // http://www.gradle.org/docs/current/dsl/org.gradle.plugins.ide.idea.model.IdeaModule.html#org.gradle.plugins.ide.idea.model.IdeaModule:scopes
             // http://gradle.1045684.n5.nabble.com/Idea-project-generation-and-provided-scope-td4684287.html
+            // http://gradle.org/docs/2.0/release-notes#+=-operator-changes-that-typically-affect-configuration-of-eclipse-and-idea-plugin
             if(ideaProject) {
                 println ":${project.name}:${thisname} Detected a IDEA project."
                 project.idea.module {
                     // TODO: idea plugin seems to be incomplete when it is automatically loaded by the Android Studio. Timing is bad?
                     //       Gradle 'projectname' project refresh failed: Cannot get property 'plus' on null object
                     try {
-                        scopes.PROVIDED.plus += project.configurations.provided
+                        scopes.PROVIDED.plus += [project.configurations.provided]
 
                         //scopes.PROVIDED.plus += project.configurations.provided.compile
                         //scopes.PROVIDED.plus += project.configurations.provided.runtime

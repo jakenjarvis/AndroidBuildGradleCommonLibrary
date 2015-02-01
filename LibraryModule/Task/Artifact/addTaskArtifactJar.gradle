@@ -20,6 +20,7 @@ def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "Jar"
 def artifactTypeName = "Java"
+def artifactClassifier = 'jar'
 
 if(androidApplicationProject || androidLibraryProject) {
     def variants
@@ -40,10 +41,10 @@ if(androidApplicationProject || androidLibraryProject) {
 
         def task = project.tasks.create(taskname, Jar)
         task.dependsOn variant.javaCompile
-        task.classifier = 'jar'
+        task.classifier = artifactClassifier
         task.from variant.javaCompile.destinationDir
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
-        task.destinationDir = file('build/libs/')
+        task.destinationDir = file("build/outputs/${task.classifier}/")
 
         task.dependsOn variant.assemble
         variant.assemble.finalizedBy task
@@ -62,7 +63,8 @@ if(javaProject) {
     task.dependsOn project.compileJava
     task.from project.compileJava.destinationDir
     task.archiveName = commonlibrary.generateArchiveName(task, null)
-    task.destinationDir = file('build/libs/')
+    //task.destinationDir = file('build/libs/')
+    task.destinationDir = file("build/outputs/${task.classifier}/")
 
     task.dependsOn project.jar
     project.jar.finalizedBy task

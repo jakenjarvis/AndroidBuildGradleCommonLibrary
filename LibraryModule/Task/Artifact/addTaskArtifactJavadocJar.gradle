@@ -47,6 +47,7 @@ def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "JavadocJar"
 def artifactTypeName = "JavadocJar"
+def artifactClassifier = 'javadoc'
 
 if(androidApplicationProject || androidLibraryProject) {
     def variants
@@ -67,25 +68,31 @@ if(androidApplicationProject || androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def generatetask = project.tasks.create(generateTaskname, Javadoc)
-        generatetask.source = variant.sourceSets.allJava
-        generatetask.classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator), variant.javaCompile.classpath) + configurations.compile
+        generatetask.source = variant.sourceSets.java.srcDirs
+
+        //generatetask.classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator), variant.javaCompile.classpath) + configurations.compile
+        generatetask.classpath += project.files(android.getBootClasspath().join(File.pathSeparator), variant.javaCompile.classpath.files) + configurations.compile
+
         generatetask.exclude '**/BuildConfig.java'
         generatetask.exclude '**/R.java'
 
         //generatetask.options.docEncoding = rootProject.defaultEncoding
         //generatetask.options.charSet = rootProject.defaultEncoding
         generatetask.options.links("http://docs.oracle.com/javase/7/docs/api/")
-        generatetask.options.linksOffline("http://d.android.com/reference", "${android.plugin.sdkDirectory}/docs/reference")
+        //generatetask.options.linksOffline("http://d.android.com/reference", "${android.plugin.sdkDirectory}/docs/reference")
+        generatetask.options.linksOffline("http://d.android.com/reference","${android.sdkDirectory}/docs/reference")
+
         generatetask.options.links(project.ext.javadocLinks)
         generatetask.options.locale = project.ext.javadocLocale
 
         def task = project.tasks.create(taskname, Jar)
         task.dependsOn generatetask
         task.from generatetask.destinationDir
-        task.classifier = 'javadoc'
+        task.classifier = artifactClassifier
         task.extension  = 'jar'
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
-        task.destinationDir = file('build/libs/')
+        //task.destinationDir = file('build/libs/')
+        task.destinationDir = file("build/outputs/${task.classifier}/")
 
         //artifacts.add('archives', task);
         artifacts.add('ArtifactJavadocJar', task);
@@ -111,10 +118,11 @@ if(javaProject) {
     def task = project.tasks.create(taskname, Jar)
     task.dependsOn generatetask
     task.from generatetask.destinationDir
-    task.classifier = 'javadoc'
+    task.classifier = artifactClassifier
     task.extension  = 'jar'
     task.archiveName = commonlibrary.generateArchiveName(task, null)
-    task.destinationDir = file('build/libs/')
+    //task.destinationDir = file('build/libs/')
+    task.destinationDir = file("build/outputs/${task.classifier}/")
 
     //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);

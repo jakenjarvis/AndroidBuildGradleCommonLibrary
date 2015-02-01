@@ -32,9 +32,9 @@ if(androidApplicationProject || androidLibraryProject) {
             def task = project.tasks.create(taskname, FindBugs)
 
             //task.classes = files(variant.sourceSets.main.output.classesDir)
-            task.classes = fileTree("${buildDir}/classes/${variant.name}")
+            task.classes = fileTree("${buildDir}/intermediates/classes/${variant.name}")
 
-            task.source files(variant.sourceSets.allJava.srcDirs)
+            task.source files(variant.sourceSets.java.srcDirs)
             task.include '**/*.java'
             task.exclude '**/gen/**'
             task.classpath = files()

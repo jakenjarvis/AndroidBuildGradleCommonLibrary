@@ -30,7 +30,7 @@ if(androidApplicationProject || androidLibraryProject) {
             def taskname = "pmd${name}"
 
             def task = project.tasks.create(taskname, Pmd)
-            task.source files(variant.sourceSets.allJava.srcDirs)
+            task.source files(variant.sourceSets.java.srcDirs)
 
             // https://github.com/pmd/pmd/tree/master/pmd/src/main/resources/rulesets/java
 

@@ -25,6 +25,7 @@ def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "Apklib"
 def artifactTypeName = "APKLIB"
+def artifactClassifier = 'apklib'
 
 if(androidLibraryProject) {
     def variants = android.libraryVariants
@@ -36,7 +37,7 @@ if(androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Zip)
-        task.classifier = 'apklib'
+        task.classifier = artifactClassifier
         task.extension = 'apklib'
         task.from "${buildDir}/bundles/${variant.dirName}/AndroidManifest.xml"
         task.into('res') {
@@ -47,7 +48,7 @@ if(androidLibraryProject) {
         }
 
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
-        task.destinationDir = file('build/libs/')
+        task.destinationDir = file("build/outputs/${task.classifier}/")
 
         task.dependsOn variant.assemble
         variant.assemble.finalizedBy task

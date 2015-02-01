@@ -30,7 +30,7 @@ if(androidApplicationProject || androidLibraryProject) {
             def taskname = "checkstyle${name}"
 
             def task = project.tasks.create(taskname, Checkstyle)
-            task.source files(variant.sourceSets.allJava.srcDirs)
+            task.source files(variant.sourceSets.java.srcDirs)
             task.include '**/*.java'
             task.exclude '**/gen/**'
             task.classpath = files()

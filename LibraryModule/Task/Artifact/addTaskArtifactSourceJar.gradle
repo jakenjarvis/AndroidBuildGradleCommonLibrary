@@ -20,6 +20,7 @@ def androidLibraryProject = project.plugins.hasPlugin('android-library')
 
 def artifactType = "SourceJar"
 def artifactTypeName = "Java Source"
+def artifactClassifier = 'sources'
 
 if(androidApplicationProject || androidLibraryProject) {
     def variants
@@ -39,11 +40,12 @@ if(androidApplicationProject || androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Jar)
-        task.from variant.sourceSets.allSource
-        task.classifier = 'sources'
+        task.from variant.sourceSets.java.srcDirs
+        task.classifier = artifactClassifier
         task.extension  = 'jar'
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
-        task.destinationDir = file('build/libs/')
+        //task.destinationDir = file('build/libs/')
+        task.destinationDir = file("build/outputs/${task.classifier}/")
 
         //artifacts.add('archives', task);
         artifacts.add('ArtifactSourceJar', task);
@@ -57,10 +59,11 @@ if(javaProject) {
 
     def task = project.tasks.create(taskname, Jar)
     task.from project.sourceSets.main.allSource
-    task.classifier = 'sources'
+    task.classifier = artifactClassifier
     task.extension  = 'jar'
     task.archiveName = commonlibrary.generateArchiveName(task, null)
-    task.destinationDir = file('build/libs/')
+    //task.destinationDir = file('build/libs/')
+    task.destinationDir = file("build/outputs/${task.classifier}/")
 
     //artifacts.add('archives', task);
     artifacts.add('ArtifactJar', task);

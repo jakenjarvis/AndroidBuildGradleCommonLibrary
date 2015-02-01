@@ -37,13 +37,16 @@ def androidLibraryProject = project.plugins.hasPlugin('android-library')
 if(androidApplicationProject || androidLibraryProject) {
     def variants
     def variantsTypeName
+    def androidExtension
     if(androidApplicationProject) {
         variants = android.applicationVariants
         variantsTypeName = "Android Application"
+        androidExtension = project.plugins.getPlugin('android').extension
     }
     if(androidLibraryProject) {
         variants = android.libraryVariants
         variantsTypeName = "Android Library"
+        androidExtension = project.plugins.getPlugin('android-library').extension
     }
 
     println ":${project.name}:${thisname} Detected a ${variantsTypeName} project."
@@ -55,11 +58,13 @@ if(androidApplicationProject || androidLibraryProject) {
 
             def aptOutputBaseDir = file("$buildDir/source/generated")
             def aptOutputVariantDir = new File(aptOutputBaseDir, variant.dirName)
-            //def sourceSetName = new File(variant.dirName).getName()
+            def sourceSetName = new File(variant.dirName).getName()
 
             //android.sourceSets[sourceSetName].java.srcDirs += aptOutputVariantDir.getPath()
             //variant.javaCompile.classpath += project.configurations.apt
             //variant.addJavaSourceFoldersToModel(aptOutputVariantDir)
+
+            androidExtension.sourceSets[sourceSetName].java.srcDirs.addAll aptOutputVariantDir.path
 
             variant.javaCompile.options.compilerArgs += [
                 '-processorpath', project.configurations.apt.getAsPath(),

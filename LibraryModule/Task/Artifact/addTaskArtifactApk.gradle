@@ -12,6 +12,7 @@ def androidApplicationProject = project.plugins.hasPlugin('android')
 
 def artifactType = "Apk"
 def artifactTypeName = "APK"
+def artifactClassifier = 'apk'
 
 if(androidApplicationProject) {
     def variants = android.applicationVariants
@@ -23,15 +24,30 @@ if(androidApplicationProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Zip)
-        task.classifier = 'apk'
+        task.classifier = artifactClassifier
         task.extension = 'apk'
         //task.archiveName = new File(variant.outputFile.getCanonicalFile().getName())
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
         //task.destinationDir = new File(variant.outputFile.getCanonicalFile().getParent())
-        task.destinationDir = file('build/apk/')
+        task.destinationDir = file("build/outputs/${task.classifier}/")
 
         // https://groups.google.com/forum/#!topic/adt-dev/4_-5NvxuFB0
-        variant.outputFile = task.archivePath
+        // No such property: outputFile for class: ***
+        //variant.outputFile = task.archivePath
+
+        //println "--------------------------------------------------"
+        // http://stackoverflow.com/questions/27969060/get-application-version-from-manifest-in-android-studio-build-gradle
+        // http://tools.android.com/tech-docs/new-build-system/user-guide/apk-splits
+        //println "task.archivePath ${task.archivePath}"
+        variant.outputs.each { output ->
+            def File defaultOutputFile = output.outputFile
+            //println "output.outputFile ${output.outputFile}"
+            if(defaultOutputFile.getName().endsWith(".${task.extension}")) {
+                output.outputFile = task.archivePath
+            }
+            //println "output.outputFile ${output.outputFile}"
+        }
+        //println "--------------------------------------------------"
 
         task.dependsOn variant.assemble
         variant.assemble.finalizedBy task
