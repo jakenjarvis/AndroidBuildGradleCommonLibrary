@@ -4,18 +4,6 @@ println "Loading ${thisname}"
 
 // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.bundling.Zip.html
 // https://github.com/googlemaps/android-maps-utils/blob/master/library/build.gradle
-//task artifactApklib(type: Zip) {
-//    extension = 'apklib'
-//    from 'AndroidManifest.xml'
-//    into('res') {
-//        from 'res'
-//    }
-//    into('src') {
-//        from 'src'
-//    }
-//    destinationDir = file('build/libs/')
-//}
-
 
 configurations {
     ArtifactApklib

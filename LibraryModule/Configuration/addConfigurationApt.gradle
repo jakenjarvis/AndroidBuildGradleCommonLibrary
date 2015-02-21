@@ -22,12 +22,6 @@ ext {
     javaCompilerAptOptionsArgs = [:] // key=variant.name, value=args
 }
 
-// ** Configuration Example **
-// android.applicationVariants.all { variant ->
-//     javaCompilerAptOptionsArgs += ["${variant.name}" : ['-processor', 'com.tojc.ormlite.android.compiler.ContractAnnotationProcessor']]
-// }
-
-
 def configurationApt = project.configurations.create('apt')
 configurationApt.extendsFrom project.configurations.getByName('compile')
 
