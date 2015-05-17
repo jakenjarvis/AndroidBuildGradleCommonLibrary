@@ -36,6 +36,7 @@ if(androidLibraryProject) {
         }
 
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
+        //task.destinationDir = file('build/libs/')
         task.destinationDir = file("build/outputs/${task.classifier}/")
 
         task.dependsOn variant.assemble

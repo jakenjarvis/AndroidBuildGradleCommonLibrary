@@ -43,6 +43,7 @@ if(androidApplicationProject || androidLibraryProject) {
         task.classifier = artifactClassifier
         task.from variant.javaCompile.destinationDir
         task.archiveName = commonlibrary.generateArchiveName(task, variant)
+        //task.destinationDir = file('build/libs/')
         task.destinationDir = file("build/outputs/${task.classifier}/")
 
         task.dependsOn variant.assemble

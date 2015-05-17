@@ -32,6 +32,7 @@ if(androidApplicationProject || androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def task = project.tasks.create(taskname, Jar)
+        //task.from variant.sourceSets.allSource
         task.from variant.sourceSets.java.srcDirs
         task.classifier = artifactClassifier
         task.extension  = 'jar'

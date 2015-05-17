@@ -47,6 +47,7 @@ if(androidApplicationProject || androidLibraryProject) {
         def taskname = "packageArtifact${name}${artifactType}"
 
         def generatetask = project.tasks.create(generateTaskname, Javadoc)
+        //generatetask.source = variant.sourceSets.allJava
         generatetask.source = variant.sourceSets.java.srcDirs
 
         //generatetask.classpath += project.files(android.plugin.getRuntimeJarList().join(File.pathSeparator), variant.javaCompile.classpath) + configurations.compile
